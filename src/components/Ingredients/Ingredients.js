@@ -1,11 +1,23 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useReducer, useState, useCallback} from 'react';
 import IngredientList from "./IngredientList";
 import IngredientForm from './IngredientForm';
 import Search from './Search';
 import ErrorModal from "../UI/ErrorModal";
 
+const ingredientReducer = (state, action) => {
+    switch (action.type) {
+        case 'SET':
+            return action.ingredients;
+        case 'ADD':
+            return [...state, action.ingredient];
+        case 'DELETE':
+            return state.filter(ingredient => ingredient.id !== action.id);
+        default: throw new Error('Should not get here');
+    }
+};
+
 const Ingredients = () => {
-    const [ingredients, setIngredients] = useState([]);
+    const [ingredients, dispatch] = useReducer(ingredientReducer, []);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -18,7 +30,7 @@ const Ingredients = () => {
         }).then(response => {
             return response.json();
         }).then(responseData => {
-            setIngredients(prevState => [...prevState, {id: responseData.name, ...ingredient}]);
+            dispatch({type: 'ADD', ingredient: {id: responseData.name, ...ingredient}});
             setIsLoading(false);
         }).catch(error => {
             setError(error.message);
@@ -31,7 +43,7 @@ const Ingredients = () => {
         fetch(`https://react-hooks-9390e.firebaseio.com/ingredients/${id}.json`, {
             method: 'DELETE'
         }).then(response => {
-            setIngredients(prevState => prevState.filter(ingredient => ingredient.id !== id));
+            dispatch({type: 'DELETE', id: id});
             setIsLoading(false);
         }).catch(error => {
             setError(error.message);
@@ -40,8 +52,8 @@ const Ingredients = () => {
     };
 
     const filteredIngredientsHandler = useCallback(filterIngredients => {
-        setIngredients(filterIngredients);
-    }, [setIngredients]);
+        dispatch({type: 'SET', ingredients: filterIngredients});
+    }, []);
 
     const clearError = () => {
         setError(null);
