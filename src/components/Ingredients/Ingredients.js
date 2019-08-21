@@ -20,7 +20,7 @@ const ingredientReducer = (state, action) => {
 
 const Ingredients = () => {
     const [ingredients, dispatch] = useReducer(ingredientReducer, []);
-    const [httpState, sendRequest] = useHttp();
+    const [httpState, sendRequest, clear] = useHttp();
 
     useEffect(() => {
         if (httpState.identifier === 'DELETE' && !httpState.loading && !httpState.error) {
@@ -43,8 +43,8 @@ const Ingredients = () => {
     }, [dispatch]);
 
     const clearError = useCallback(() => {
-        // httpDispatch({type: 'CLEAR'});
-    }, []);
+        clear();
+    }, [clear]);
 
     return (
         <div className="App">
