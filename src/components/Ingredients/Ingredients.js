@@ -20,6 +20,9 @@ const Ingredients = () => {
         }).then(responseData => {
             setIngredients(prevState => [...prevState, {id: responseData.name, ...ingredient}]);
             setIsLoading(false);
+        }).catch(error => {
+            setError(error.message);
+            setIsLoading(false);
         });
     };
 
