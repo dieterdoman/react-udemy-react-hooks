@@ -1,8 +1,9 @@
-import React, {useReducer, useCallback} from 'react';
+import React, {useReducer, useEffect, useCallback} from 'react';
 import IngredientList from "./IngredientList";
 import IngredientForm from './IngredientForm';
 import Search from './Search';
 import ErrorModal from "../UI/ErrorModal";
+import useHttp from "../../hooks/http";
 
 const ingredientReducer = (state, action) => {
     switch (action.type) {
@@ -17,71 +18,32 @@ const ingredientReducer = (state, action) => {
     }
 };
 
-const httpReducer = (state, action) => {
-    switch (action.type) {
-        case 'SEND':
-            return {
-                loading: true,
-                error: null
-            };
-        case 'RESPONSE':
-            return {
-                ...state,
-                loading: false
-            };
-        case 'ERROR':
-            return {
-                loading: false,
-                error: action.error
-            };
-        case 'CLEAR':
-            return {
-                ...state,
-                error: null
-            };
-        default:
-            throw new Error("Should not get here");
-    }
-};
-
 const Ingredients = () => {
     const [ingredients, dispatch] = useReducer(ingredientReducer, []);
-    const [httpState, httpDispatch] = useReducer(httpReducer, {loading: false, error: null});
+    const [httpState, sendRequest] = useHttp();
+
+    useEffect(() => {
+        if (httpState.identifier === 'DELETE' && !httpState.loading && !httpState.error) {
+            dispatch({type: 'DELETE', id: httpState.extra});
+        } else if (httpState.identifier === 'POST' && !httpState.loading && !httpState.error) {
+            dispatch({type: 'ADD', ingredient: {id: httpState.data.name, ...httpState.extra}});
+        }
+    }, [httpState]);
 
     const addIngredientsHandler = useCallback(ingredient => {
-        httpDispatch({type: 'SEND'});
-        fetch('https://react-hooks-9390e.firebaseio.com/ingredients.json', {
-            method: 'POST',
-            body: JSON.stringify(ingredient),
-            headers: {'Content-Type': 'application/json'}
-        }).then(response => {
-            return response.json();
-        }).then(responseData => {
-            dispatch({type: 'ADD', ingredient: {id: responseData.name, ...ingredient}});
-            httpDispatch({type: 'RESPONSE'});
-        }).catch(error => {
-            httpDispatch({type: 'ERROR', error: error.message})
-        });
-    }, [httpDispatch, dispatch]);
+        sendRequest('https://react-hooks-9390e.firebaseio.com/ingredients.json', 'POST', JSON.stringify(ingredient), ingredient);
+    }, [sendRequest]);
 
     const removeIngredientHandler = useCallback(id => {
-        httpDispatch({type: 'SEND'});
-        fetch(`https://react-hooks-9390e.firebaseio.com/ingredients/${id}.json`, {
-            method: 'DELETE'
-        }).then(response => {
-            dispatch({type: 'DELETE', id: id});
-            httpDispatch({type: 'RESPONSE'});
-        }).catch(error => {
-            httpDispatch({type: 'ERROR', error: error.message})
-        });
-    }, [httpDispatch, dispatch]);
+        sendRequest(`https://react-hooks-9390e.firebaseio.com/ingredients/${id}.json`, 'DELETE', null, id);
+    }, [sendRequest]);
 
     const filteredIngredientsHandler = useCallback(filterIngredients => {
         dispatch({type: 'SET', ingredients: filterIngredients});
     }, [dispatch]);
 
     const clearError = useCallback(() => {
-        httpDispatch({type: 'CLEAR'});
+        // httpDispatch({type: 'CLEAR'});
     }, []);
 
     return (
