@@ -32,6 +32,7 @@ const Search = React.memo(props => {
             clearTimeout(timer);
         };
     }, [filterState, onLoadIngredients, inputRef]);
+
     return (
         <section className="search">
             <Card>
