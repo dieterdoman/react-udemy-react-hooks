@@ -1,4 +1,4 @@
-import React, {useReducer, useState, useCallback} from 'react';
+import React, {useReducer, useCallback} from 'react';
 import IngredientList from "./IngredientList";
 import IngredientForm from './IngredientForm';
 import Search from './Search';
@@ -48,7 +48,7 @@ const Ingredients = () => {
     const [ingredients, dispatch] = useReducer(ingredientReducer, []);
     const [httpState, httpDispatch] = useReducer(httpReducer, {loading: false, error: null});
 
-    const addIngredientsHandler = ingredient => {
+    const addIngredientsHandler = useCallback(ingredient => {
         httpDispatch({type: 'SEND'});
         fetch('https://react-hooks-9390e.firebaseio.com/ingredients.json', {
             method: 'POST',
@@ -62,9 +62,9 @@ const Ingredients = () => {
         }).catch(error => {
             httpDispatch({type: 'ERROR', error: error.message})
         });
-    };
+    }, [httpDispatch, dispatch]);
 
-    const removeIngredientHandler = id => {
+    const removeIngredientHandler = useCallback(id => {
         httpDispatch({type: 'SEND'});
         fetch(`https://react-hooks-9390e.firebaseio.com/ingredients/${id}.json`, {
             method: 'DELETE'
@@ -74,15 +74,15 @@ const Ingredients = () => {
         }).catch(error => {
             httpDispatch({type: 'ERROR', error: error.message})
         });
-    };
+    }, [httpDispatch, dispatch]);
 
     const filteredIngredientsHandler = useCallback(filterIngredients => {
         dispatch({type: 'SET', ingredients: filterIngredients});
-    }, []);
+    }, [dispatch]);
 
-    const clearError = () => {
+    const clearError = useCallback(() => {
         httpDispatch({type: 'CLEAR'});
-    };
+    }, []);
 
     return (
         <div className="App">
